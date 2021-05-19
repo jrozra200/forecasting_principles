@@ -1,0 +1,103 @@
+---
+title: "Chapter 2"
+author: "Jake Rozran"
+date: "5/19/2021"
+output: html_document
+---
+
+# 2.1
+
+```{r chp2.1}
+library(fpp3)
+
+y <- tsibble(
+  Year = 2015:2019,
+  Observation = c(123, 39, 78, 52, 110),
+  index = Year
+)
+
+z <- tibble(Month = c("2019 Jan", "2019 Feb", "2019 Mar"),
+            Observation = c(50, 23, 34))
+
+z %>% 
+    mutate(Month = yearmonth(Month)) %>% 
+    as_tsibble(index = Month)
+
+PBS %>%
+  filter(ATC2 == "A10") %>%
+  select(Month, Concession, Type, Cost) %>%
+  summarise(TotalC = sum(Cost)) %>%
+  mutate(Cost = TotalC/1e6) -> a10
+```
+# 2.4
+
+```{r chp2.4}
+a10 %>%
+  gg_season(Cost, labels = "both") +
+  labs(y = "$ (millions)",
+       title = "Seasonal plot: Antidiabetic drug sales") +
+  expand_limits(x = ymd(c("1972-12-28", "1973-12-04")))
+```
+
+# 2.5
+
+```{r chp2.5}
+a10 %>%
+  gg_subseries(Cost) +
+  labs(
+    y = "$ (millions)",
+    title = "Australian antidiabetic drug sales"
+  )
+```
+
+# 2.6
+
+```{r chp2.6}
+data("tourism")
+
+visitors <- tourism %>%
+  group_by(State) %>%
+  summarise(Trips = sum(Trips))
+
+visitors %>%
+  pivot_wider(values_from=Trips, names_from=State) %>%
+  GGally::ggpairs(columns = 2:9)
+```
+
+# 2.7
+
+```{r chp2.7}
+data("aus_production")
+
+recent_production <- aus_production %>%
+  filter(year(Quarter) >= 2000)
+recent_production %>%
+  gg_lag(Beer, geom = "point") +
+  labs(x = "lag(Beer, k)")
+
+recent_production %>% 
+    ACF(Beer, lag_max = 9)
+
+recent_production %>%
+  ACF(Beer) %>%
+  autoplot() + 
+    labs(title="Australian beer production")
+
+a10 %>%
+  ACF(Cost, lag_max = 48) %>%
+  autoplot() +
+    labs(title="Australian antidiabetic drug sales")
+```
+# 2.9
+
+```{r chp2.9}
+set.seed(30)
+y <- tsibble(sample = 1:50, wn = rnorm(50), index = sample)
+y %>% 
+    autoplot(wn) + 
+    labs(title = "White noise", y = "")
+y %>%
+    ACF(wn) %>%
+    autoplot() + 
+    labs(title = "White noise")
+```
