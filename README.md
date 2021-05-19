@@ -1,7 +1,7 @@
 # forecasting_principles
 
 My repo dedicated to walking through 
-[Forecasting: Principals and Practice](https://otexts.com/fpp3/).
+[Forecasting: Principles and Practice](https://otexts.com/fpp3/).
 
 ## Citation:
 
