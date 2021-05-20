@@ -1,0 +1,123 @@
+---
+title: "Chapter 3"
+author: "Jake Rozran"
+date: "5/19/2021"
+output: html_document
+---
+
+# 3.1
+
+```{r chp3.1}
+library(fpp3)
+library(seasonal)
+data("aus_production")
+
+lambda <- aus_production %>%
+  features(Gas, features = guerrero) %>%
+  pull(lambda_guerrero)
+
+aus_production %>%
+  autoplot(box_cox(Gas, lambda)) +
+  labs(y = "",
+       title = latex2exp::TeX(paste0(
+         "Transformed gas production with $\\lambda$ = ",
+         round(lambda,2))))
+```
+
+# 3.2
+
+```{r chp3.2}
+us_retail_employment <- us_employment %>%
+  filter(year(Month) >= 1990, Title == "Retail Trade") %>%
+  select(-Series_ID)
+
+autoplot(us_retail_employment, Employed) +
+  labs(y = "Persons (thousands)",
+       title = "Total employment in US retail")
+
+dcmp <- us_retail_employment %>%
+  model(stl = STL(Employed))
+
+components(dcmp)
+
+components(dcmp) %>%
+  as_tsibble() %>%
+  autoplot(Employed, colour="gray") +
+  geom_line(aes(y=trend), colour = "#D55E00") +
+  labs(
+    y = "Persons (thousands)",
+    title = "Total employment in US retail"
+  )
+
+components(dcmp) %>% 
+    autoplot()
+
+components(dcmp) %>%
+  as_tsibble() %>%
+  autoplot(Employed, colour = "gray") +
+  geom_line(aes(y=season_adjust), colour = "#0072B2") +
+  labs(y = "Persons (thousands)",
+       title = "Total employment in US retail")
+```
+
+# 3.3 
+
+```{r chp3.3}
+us_retail_employment_ma <- us_retail_employment %>%
+  mutate(
+    `12-MA` = slider::slide_dbl(Employed, mean,
+                .before = 5, .after = 6, .complete = TRUE),
+    `2x12-MA` = slider::slide_dbl(`12-MA`, mean,
+                .before = 1, .after = 0, .complete = TRUE)
+  )
+
+us_retail_employment_ma %>%
+  autoplot(Employed, colour = "gray") +
+  geom_line(aes(y = `2x12-MA`), colour = "#D55E00") +
+  labs(y = "Persons (thousands)",
+       title = "Total employment in US retail")
+```
+
+# 3.5
+
+```{r chp 3.5}
+x11_dcmp <- us_retail_employment %>%
+  model(x11 = X_13ARIMA_SEATS(Employed ~ x11())) %>%
+  components()
+
+autoplot(x11_dcmp) +
+  labs(title =
+    "Decomposition of total US retail employment using X-11.")
+
+x11_dcmp %>%
+  ggplot(aes(x = Month)) +
+  geom_line(aes(y = Employed, colour = "Data")) +
+  geom_line(aes(y = season_adjust,
+                colour = "Seasonally Adjusted")) +
+  geom_line(aes(y = trend, colour = "Trend")) +
+  labs(y = "Persons (thousands)",
+       title = "Total employment in US retail") +
+  scale_colour_manual(
+    values = c("gray", "#0072B2", "#D55E00"),
+    breaks = c("Data", "Seasonally Adjusted", "Trend")
+  )
+
+seats_dcmp <- us_retail_employment %>%
+  model(seats = X_13ARIMA_SEATS(Employed ~ seats())) %>%
+  components()
+autoplot(seats_dcmp) +
+  labs(title =
+    "Decomposition of total US retail employment using SEATS")
+```
+
+# 3.6
+
+```{r chp3.6}
+us_retail_employment %>%
+  model(
+    STL(Employed ~ trend(window = 7) +
+                   season(window = "periodic"),
+    robust = TRUE)) %>%
+  components() %>%
+  autoplot()
+```
