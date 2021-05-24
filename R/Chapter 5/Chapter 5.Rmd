@@ -128,3 +128,85 @@ google_fc %>%
          subtitle = "(Jan 2015 - Jan 2016)") +
     guides(colour = guide_legend(title = "Forecast"))
 ```
+
+# 5.3
+
+```{r chp5.3}
+augment(beer_fit)
+```
+
+# 5.4
+
+```{r chp5.4}
+autoplot(google_2015, Close) +
+    labs(y = "$US",
+         title = "Google daily closing stock prices in 2015")
+
+aug <- google_2015 %>%
+    model(NAIVE(Close)) %>%
+    augment()
+
+autoplot(aug, .innov) +
+    labs(y = "$US",
+         title = "Residuals from the Naïve method")
+
+aug %>%
+    ggplot(aes(x = .innov)) +
+    geom_histogram() +
+    labs(title = "Histogram of residuals")
+
+aug %>%
+    ACF(.innov) %>%
+    autoplot() +
+    labs(title = "Residuals from the Naïve method")
+
+google_2015 %>%
+    model(NAIVE(Close)) %>%
+    gg_tsresiduals()
+```
+
+# 5.5
+
+```{r chp5.5}
+fit <- google_2015 %>%
+    model(NAIVE(Close))
+
+sim <- fit %>% 
+  generate(h = 30, times = 10000, bootstrap = TRUE)
+
+sim
+
+google_2015 %>%
+    ggplot(aes(x = day)) +
+    geom_line(aes(y = Close)) +
+    geom_line(aes(y = .sim), alpha = 0.2, color = "black",
+              data = sim) +
+    labs(title="Google daily closing stock price", y="$US" ) +
+    guides(col = FALSE)
+
+fc <- fit %>% 
+    forecast(h = 30, bootstrap = TRUE)
+
+fc
+
+autoplot(fc, google_2015) +
+    labs(title="Google daily closing stock price", y="$US" )
+
+google_2015 %>%
+  model(NAIVE(Close)) %>%
+  forecast(h = 10, bootstrap = TRUE, times = 10000) %>%
+  hilo()
+```
+
+# 5.6
+
+```{r chp5.6}
+prices %>%
+    filter(!is.na(eggs)) %>%
+    model(RW(log(eggs) ~ drift())) %>%
+    forecast(h = 50) %>%
+    autoplot(prices %>% filter(!is.na(eggs)),
+             level = 80, point_forecast = lst(mean, median)) +
+    labs(title = "Annual egg prices",
+         y = "$US (in cents adjusted for inflation) ")
+```
