@@ -210,3 +210,22 @@ prices %>%
     labs(title = "Annual egg prices",
          y = "$US (in cents adjusted for inflation) ")
 ```
+
+# 5.10
+
+```{r chp5.10}
+google_2015_tr <- google_2015 %>%
+    stretch_tsibble(.init = 3, .step = 1)
+
+fc <- google_2015_tr %>%
+    model(RW(Close ~ drift())) %>%
+    forecast(h = 8) %>%
+    group_by(.id) %>%
+    mutate(h = row_number()) %>%
+    ungroup()
+
+fc %>%
+    accuracy(google_2015, by = c("h", ".model")) %>%
+    ggplot(aes(x = h, y = RMSE)) +
+    geom_point()
+```
